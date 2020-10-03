@@ -9,7 +9,7 @@ We were motivated to research Prop 15 because we know that lack of funds hinders
  3. Which sectors have been impacted?​
 
 See our visualizations exploring these questions here:  
-https://advancementprojectca.github.io/DataChallenge/Prop15_Ending_Politics_of_Scarcity
+https://advancementprojectca.github.io/RDA/Prop15_Ending_Politics_of_Scarcity.html
 
 Data Sources:
 We used current operations expenditures from the US Census Annual Survey of State and Local Government Finances. To account for the increase in state wealth over time, we calculate expenditures as a percentage of state GDP.​
