@@ -1,0 +1,435 @@
+---
+title: "Proposition 15 and Ending the Politics of Scarcity"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(here)
+library(tidyr)
+library(htmltools)
+library(highcharter)
+options(scipen = 999)
+
+
+# load counties data
+counties_list <-  read.csv("W:/Project/RDA Team/CA Election Data Challenge/CA Election 2020 Data Challenge/Data/Counties_Expenditures_1972_2012.csv")
+
+# load GDP data for all states and United States
+gdp_all_states<-read.csv("W:/Project/RDA Team/CA Election Data Challenge/CA Election 2020 Data Challenge/Data/State_GDP_1970_2018.csv") 
+
+# read prepared data
+state_df <- read.csv(here("Data/State_Expenditures_1972_2012.csv"))
+state_df$pct_gdp <- round(state_df$pct_gdp, 3)
+
+```
+
+
+  
+### Top 10 Highest GDPs by State
+
+```{r}
+
+# Make pretty numbers and make dollars into billions of dollars
+gdp_all_states <- mutate(gdp_all_states,
+                    ia_gdp_pct_change = round(as.numeric(ia_gdp_pct_change),2),
+                     ia_gdp_pct_change_1970_2018 = round(as.numeric(ia_gdp_pct_change_1970_2018),2),
+                    gdp=round((gdp/1000000000),2),
+                    ia_gdp=round((ia_gdp/1000000000),2),
+                    
+)
+
+# gdp_all_states$ia_gdp <- prettyNum(gdp_all_states$ia_gdp, big.mark = ",", preserve.width = "none")
+
+# Create data subsets to pull just the states with the top GDP, California and one dataset just for CA and US
+#Just states within the top 10 list of gdp for 2018
+
+gdp_top_states_2018<- gdp_all_states %>%
+  filter(gdp_year == '2018', ia_gdp_rank==1 |
+           ia_gdp_rank==2 |
+           ia_gdp_rank==3 |
+           ia_gdp_rank==4 |
+           ia_gdp_rank==5 |
+           ia_gdp_rank==6 |
+           ia_gdp_rank==7 |
+           ia_gdp_rank==8|
+           ia_gdp_rank==9 |
+           ia_gdp_rank==10)
+
+gdp_top_states <- gdp_all_states %>%
+  filter(state_name %in% gdp_top_states_2018$state_name)
+
+
+# Chart of states with top 10 GDP, including CA
+highcharter::hchart(gdp_top_states, hcaes(x = 'gdp_year', y ='ia_gdp', group = 'state_name'), type = "line",
+                    tooltip = list(pointFormat = "Inflation-adjusted GDP (in billions): ${point.ia_gdp}<br>% Change in GDP from year before: {point.ia_gdp_pct_change}%<br>")) %>%
+  hc_yAxis(title = list(text = "Inflation-Adjusted GDP in Billions of $")) %>%
+  hc_xAxis(title = list(text = "Year")) %>%
+  hc_tooltip(crosshairs = TRUE)
+
+
+
+```
+  
+***  
+  
+- When looking at states with the highest GDP growth overtime,  California's GDP growth significantly outpaces other states
+  
+- Ideally, investment in essential services for Californians should reflect California's significant GDP growth 
+
+
+
+  
+### State Expenditures as Percent of Total State GDP Over Time
+
+```{r}
+library(highcharter)
+
+
+
+charts_state <- list(
+ed_state <- 
+state_df %>% 
+  filter(expenditures =="Education") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,2)), 
+                       tooltip = list(pointFormat = "California: {point.pct_gdp}%"), color="#F58353") %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic")
+  ) %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>% 
+  hc_title(
+    text = "Education",
+    style = list(fontFamily = "Franklin Gothic")
+  ) ,
+
+lib_state <- 
+  state_df %>% 
+  filter(expenditures == "Libraries") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,2)),
+         tooltip = list(pointFormat = "California: {point.pct_gdp}%"), color="#87962A") %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic")
+  )  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>% 
+  hc_title(
+    text = "Libraries",
+    style = list(fontFamily = "Franklin Gothic")
+  ) ,
+  
+
+po_state <- 
+  state_df %>% 
+  filter(expenditures == "Police + Corrections") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,2)),
+         tooltip = list(pointFormat = "California: {point.pct_gdp}%"), color="#E329B3") %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic")
+  )  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>% 
+  hc_title(
+    text = "Police + Corrections",
+    style = list(fontFamily = "Franklin Gothic")
+  ), 
+
+nat_state <- 
+  state_df %>% 
+  filter(expenditures == "Natural Resources") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,2)), 
+         tooltip = list(pointFormat = "California: {point.pct_gdp}%"), color="#5D56E3") %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>% 
+  hc_title(
+    text = "Natural Resources",
+    style = list(fontFamily = "Franklin Gothic")
+  ) )
+
+
+
+hw_grid(charts_state, rowheight = 350, ncol=2) 
+
+```
+
+***  
+  
+- Over time, the percentage of California's wealth that has been devoted to education, libraries and natural resources has decreased. These essential services have continuously underfunded since the passage of Proposition 13 in 1978. 
+  
+- While prioritization of these essential services is on the decline, the percentage of the state's wealth devoted to policing and corrections has steadily increased over time. 
+
+- State expenditures and state GDP have been adjusted for inflation. 
+  
+
+### County Expenditures as Percent of Total State GDP Over Time
+
+```{r}
+library(highcharter)
+
+nonlac <- counties_list %>% 
+  filter(county!="Los Angeles")
+
+
+# 1 plot per expenditure
+charts_county <- list(
+
+
+ed_county <- 
+  nonlac %>% 
+  filter(expenditure == "Education") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Education",
+    style = list(fontFamily = "Franklin Gothic")),
+
+lib_county <- 
+ nonlac %>% 
+  filter(expenditure == "Libraries") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), 
+         showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Libraries",
+    style = list(fontFamily = "Franklin Gothic")),
+
+nat_county <- 
+  nonlac %>% 
+  filter(expenditure == "Natural Resources") %>%  
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Natural Resources",
+    style = list(fontFamily = "Franklin Gothic")),
+
+po_county <- 
+  nonlac %>% 
+  filter(expenditure == "Corrections + Police") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = T) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Police + Corrections",
+    style = list(fontFamily = "Franklin Gothic"))
+)
+
+
+hw_grid(charts_county, rowheight = 360, ncol=2) 
+
+```
+
+***  
+  
+- At the county level, expenditures on essential services (education, libraries, natural resources) have largely not kept pace with the GDP expansion. There is a good deal of fluctuation across years and counties.  
+  
+- For example, with the exception of San Bernardino and Kern counties, the share of education expenditures has decreased in all counties from 1972 to 2012. 
+  
+- While there is fluctuation by year and county, the expenditure share for most essential services in most counties has steadily decreased since 2002.  
+  
+- In contrast to education, libraries and natural resources, expenditures in the police + corrections sector have steadily increased in most counties since 1972.  
+
+- County expenditures and state GDP have been adjusted for inflation. 
+  
+### Los Angeles County Expenditures as Percent of Total State GDP Over Time  
+  
+```{r}
+library(highcharter)
+lac <- counties_list %>% 
+  filter(county=="Los Angeles")
+
+# 1 plot per expenditure
+charts_lacounty <- list(
+
+ed_county <- 
+  lac %>% 
+  filter(expenditure == "Education") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Education",
+    style = list(fontFamily = "Franklin Gothic")),
+
+lib_county <- 
+ lac %>% 
+  filter(expenditure == "Libraries") %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), 
+         showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Libraries",
+    style = list(fontFamily = "Franklin Gothic")),
+
+nat_county <- 
+  lac %>% 
+  filter(expenditure == "Natural Resources") %>%  
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = F) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Natural Resources",
+    style = list(fontFamily = "Franklin Gothic")),
+
+po_county <- 
+  lac %>% 
+  filter(expenditure == "Corrections + Police" ) %>% 
+  hchart("line", hcaes(x=year, y=round(pct_gdp,3), group=county), showInLegend = T) %>% 
+  hc_chart(
+    style = list(fontFamily = "Franklin Gothic"))  %>% 
+  hc_yAxis(title = list(text = "% of Inflation-Adjusted GDP")) %>%
+  hc_title(
+    text = "Police + Corrections",
+    style = list(fontFamily = "Franklin Gothic")) )
+
+
+hw_grid(charts_lacounty, rowheight = 350, ncol=2) 
+
+```
+
+***  
+  
+- In Los Angeles County, many essential services have taken a hit since the passage of Prop 13 in 1978. Expenditures on education, libraries and natural resources have not kept pace with GDP expansion.  
+  
+- The police + corrections sector has fluctuated over time in Los Angeles County, but has experienced a net gain in expenditure share since 2002, unlike education, libraries and natural resources.  
+  
+- As Los Angeles County is home to nearly one-quarter of the state's residents, LA County expenditures across essential services and police and corrections are a significant percentage of state GDP compared to other counties. We have visualized Los Angeles County expenditures separate from other counties in order to properly visualize the expenditures in other counties.
+
+- County expenditures and state GDP have been adjusted for inflation. 
+  
+### County Expenditures: Net Change Over Time
+
+```{r dpi=300}
+
+
+#########Natural Resources#############
+
+# extract natural resource expenditures
+res <- counties_list%>%
+  filter(expenditure=="Natural Resources")
+
+
+#######Percent change in Natural Resources expenditure###########
+
+# prep change in expenditure over time
+res_change <- 
+  res %>% 
+  filter(year4 %in% c("1972", "2012")) %>% 
+  select(year, county, pct_gdp) %>% 
+  pivot_wider(names_from = year, values_from=pct_gdp) %>% 
+  mutate(exp = "Natural Resources",
+         change = ((`2012`-`1972`)/`1972`)*100,
+         type = ifelse(change < 0, "net decrease", "net increase"))
+
+
+
+##########Police+Corrections###########
+
+# extract corrections expenditures
+police <- counties_list%>%
+  filter(expenditure=="Corrections + Police")
+
+
+
+######Percent change in police expenditure######
+# prep change in police expenditure over time
+police_change <- 
+  police %>% 
+  filter(year4 %in% c("1972", "2012")) %>% 
+  select(year, county, pct_gdp) %>% 
+  pivot_wider(names_from = year, values_from=pct_gdp) %>% 
+  mutate(exp = "Corrections + Police",
+         change = ((`2012`-`1972`)/`1972`)*100,
+         type = ifelse(change < 0, "net decrease", "net increase"))
+
+
+############Libraries###############
+
+# extract libraries expenditures
+lib <- counties_list%>%
+  filter(expenditure=="Libraries")
+
+
+######Percent change in Libraries expenditure######
+# prep change in Libraries expenditure over time
+lib_change <- 
+  lib %>% 
+  filter(year4 %in% c("1972", "2012")) %>% 
+  select(year, county, pct_gdp) %>% 
+  pivot_wider(names_from = year, values_from=pct_gdp) %>% 
+  mutate(exp = "Libraries",
+         change = ((`2012`-`1972`)/`1972`)*100,
+         type = ifelse(change < 0, "net decrease", "net increase"))
+
+
+
+
+###########Education###############
+
+# extract  expenditures
+ed <- counties_list%>%
+  filter(expenditure=="Education")
+
+
+######Percent change in education expenditure######
+# prep change in education expenditure over time
+ed_change <- 
+  ed %>% 
+  filter(year4 %in% c("1972", "2012")) %>% 
+  select(year, county, pct_gdp) %>% 
+  pivot_wider(names_from = year, values_from=pct_gdp) %>% 
+  mutate(exp = "Education",
+         change = ((`2012`-`1972`)/`1972`)*100,
+         type = ifelse(change < 0, "net decrease", "net increase"))
+
+
+
+#####facet wrap graph for all four categories of spending#################
+
+#combine each of the percent change graphs so theres only one df
+
+total_change<-rbind(police_change, res_change, lib_change, ed_change)%>%
+  mutate(change=change/100)
+
+#graph
+
+
+ggplot(total_change, aes(x=reorder(county, change), y=change, label=county)) +
+  geom_bar(stat='identity', aes(fill=type), width = 0.5)+
+  scale_fill_manual(name="Change",
+                    values = c("net decrease"="#FF6666", "net increase"="#42C7B5"))+
+  xlab("")+
+  ylab("\nPercent Change in Expenditures")+
+  scale_y_continuous(labels = scales::percent)+
+  coord_flip() +
+  facet_wrap(~exp)+
+  theme_minimal()
+
+
+
+```
+
+***  
+  
+- Across almost every county, Police and Corrections expenditures experienced a net increase over time, while essential services such as education experienced a net decrease in expenditure.  
+  
+- Since the passage of Proposition 13 in 1978, spending in California has not kept pace with the state's explosive economic growth for essential services like education, libraries and natural resources. 
+  
+- Not all sectors have been impacted the same. Expenditure share for the police + corrections sector has increased since 1978 for all counties in our visualization, except for in Los Angeles County.  
+  
+- County expenditures have been adjusted for inflation.
+
+
